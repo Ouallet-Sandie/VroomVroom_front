@@ -1,12 +1,17 @@
 <template>
-  <div>
+  <div class="charts-container">
     <div v-for="(data, raceId) in raceData" :key="raceId" class="chart-container">
-      <h2>Race ID: {{ raceId }}</h2>
+      <h2 class="chart-title">Race ID: {{ raceId }}</h2>
       <canvas :id="'chart-' + raceId"></canvas>
+      <div v-if="stats[raceId]" class="stats-container">
+        <p><strong>Vitesse Moyenne:</strong> {{ stats[raceId].average_speed.toFixed(2) }} Cm/h</p>
+        <p><strong>Distance:</strong> {{ stats[raceId].max_distance.toFixed(2) }} Cm</p>
+        <p><strong>Moyenne Battery:</strong> {{ stats[raceId].average_battery.toFixed(2) }} volts</p>
+        <p><strong>Durée:</strong> {{ stats[raceId].time_difference.toFixed(2) }} seconds</p>
+      </div>
     </div>
   </div>
 </template>
-
 <script>
 import { onMounted, ref, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
@@ -16,11 +21,17 @@ Chart.register(...registerables)
 export default {
   setup() {
     const raceData = ref({})
+    const stats = ref({})
 
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/stats_every_5_seconds')
-        const data = await response.json()
+        const [dataResponse, statsResponse] = await Promise.all([
+          fetch('http://localhost:5000/stats_every_5_seconds'),
+          fetch('http://localhost:5000/get_stats_races')
+        ])
+
+        const data = await dataResponse.json()
+        const statsData = await statsResponse.json()
 
         // Transform the data to group by race_id
         const groupedData = data.reduce((acc, item) => {
@@ -32,7 +43,14 @@ export default {
           return acc
         }, {})
 
+        // Store the statistics by race_id
+        const statsByRaceId = statsData.reduce((acc, item) => {
+          acc[item.sensor_data_race_id] = item
+          return acc
+        }, {})
+
         raceData.value = groupedData
+        stats.value = statsByRaceId
 
         // Ensure DOM is updated before rendering charts
         await nextTick()
@@ -85,11 +103,10 @@ export default {
 
     onMounted(fetchData)
 
-    return { raceData }
+    return { raceData, stats }
   }
 }
 </script>
-
 <style scoped>
 .charts-container {
   display: flex;
@@ -108,14 +125,9 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   position: relative;
-}
-
-.canvas-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .chart-title {
@@ -126,10 +138,22 @@ export default {
   color: #333;
   background-color: #f9f9f9;
   border-bottom: 1px solid #ddd;
+  width: 100%;
 }
 
 canvas {
   width: 100% !important;
   height: auto !important;
+}
+
+.stats-container {
+  margin-top: 10px;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  background-color: #f9f9f9;
+  border-top: 1px solid #ddd;
+  width: 100%;
 }
 </style>
