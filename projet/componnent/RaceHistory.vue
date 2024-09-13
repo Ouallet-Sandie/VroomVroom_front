@@ -26,8 +26,8 @@
       const fetchData = async () => {
         try {
           const [dataResponse, statsResponse] = await Promise.all([
-            fetch('http://localhost:5000/stats_every_5_seconds'),
-            fetch('http://localhost:5000/get_stats_races')
+            fetch('http://localhost:5000/stats_every_5_seconds'), // route api
+            fetch('http://localhost:5000/get_stats_races') // route api
           ])
   
           const data = await dataResponse.json()
