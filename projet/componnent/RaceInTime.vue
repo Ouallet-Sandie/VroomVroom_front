@@ -66,16 +66,16 @@ export default defineComponent({
           console.log('Message WebSocket JSON parsé:', data);
 
           switch (data.topic) {
-            case 'esp32/race':
+            case 'esp32bis/race':
               raceId.value = data.message;
               break;
-            case 'esp32/speed':
+            case 'esp32bis/speed':
               speed.value = data.message;
               break;
-            case 'esp32/distance':
+            case 'esp32bis/distance':
               distance.value = data.message;
               break;
-            case 'esp32/battery':
+            case 'esp32bis/battery':
               battery.value = data.message;
               break;
             default:
